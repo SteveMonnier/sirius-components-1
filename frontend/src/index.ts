@@ -14,6 +14,7 @@
 export * from 'auth/useAuth';
 export * from 'capabilities/CapabilitiesProvider';
 export * from 'capabilities/useCapabilities';
+export * from 'common/ApolloGraphQLClient';
 export * from 'common/GraphQLClient';
 export * from 'common/GraphQLHooks';
 export * from 'common/BrandingContext';
