@@ -11,7 +11,7 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 import { GraphQLClient } from 'common/GraphQLClient';
-import { useMutation, useLazyQuery } from 'common/GraphQLHooks';
+import { useLazyQuery, useMutation } from '@apollo/client';
 import { Text } from 'core/text/Text';
 import {
   COMPLETE__STATE,
@@ -236,11 +236,13 @@ export const DiagramWebSocketContainer = ({ representationId, selection, setSele
     message,
   } = state;
 
-  const [deleteElementMutation] = useMutation(deleteFromDiagramMutation, {}, 'deleteFromDiagram');
-  const [invokeNodeToolMutation] = useMutation(invokeNodeToolOnDiagramMutation, {}, 'invokeNodeToolOnDiagram');
-  const [invokeEdgeToolMutation] = useMutation(invokeEdgeToolOnDiagramMutation, {}, 'invokeEdgeToolOnDiagram');
-  const [editLabelMutation] = useMutation(editLabelMutationOp, {}, 'editLabel');
-  const [getToolSectionData, toolSectionData] = useLazyQuery(getToolSectionsQuery, {}, 'getToolSections');
+  const [deleteElementMutation] = useMutation(deleteFromDiagramMutation);
+  const [invokeNodeToolMutation] = useMutation(invokeNodeToolOnDiagramMutation);
+  const [invokeEdgeToolMutation] = useMutation(invokeEdgeToolOnDiagramMutation);
+  const [editLabelMutation] = useMutation(editLabelMutationOp);
+  const [getToolSectionData, { loading: toolSectionLoading, data: toolSectionData }] = useLazyQuery(
+    getToolSectionsQuery
+  );
   /**
    * We have choose to make only one query by diagram to get tools to avoid network flooding.
    * In consequence, a tool must contains all necessary properties to be filtered on a specific context (In the contextual palette for example).
@@ -248,7 +250,7 @@ export const DiagramWebSocketContainer = ({ representationId, selection, setSele
    * For each update of the representationId value, we will redo a query and update tools.
    */
   useEffect(() => {
-    getToolSectionData({ diagramId: representationId });
+    getToolSectionData({ variables: { diagramId: representationId } });
   }, [representationId, getToolSectionData]);
   /**
    * Dispatch the diagram to the diagramServer if our state indicate that diagram has changed.
@@ -306,7 +308,7 @@ export const DiagramWebSocketContainer = ({ representationId, selection, setSele
         representationId,
         diagramElementId,
       };
-      deleteElementMutation({ input });
+      deleteElementMutation({ variables: { input } });
     },
     [id, representationId, deleteElementMutation]
   );
@@ -325,7 +327,7 @@ export const DiagramWebSocketContainer = ({ representationId, selection, setSele
             diagramTargetElementId,
             toolId,
           };
-          invokeEdgeToolMutation({ input });
+          invokeEdgeToolMutation({ variables: { input } });
           edgeCreationFeedback.reset();
         } else {
           const [diagramElementId] = params;
@@ -336,7 +338,7 @@ export const DiagramWebSocketContainer = ({ representationId, selection, setSele
             diagramElementId,
             toolId,
           };
-          invokeNodeToolMutation({ input });
+          invokeNodeToolMutation({ variables: { input } });
         }
         dispatch({ type: SET_ACTIVE_TOOL__ACTION });
       }
@@ -379,7 +381,7 @@ export const DiagramWebSocketContainer = ({ representationId, selection, setSele
         labelId,
         newText,
       };
-      editLabelMutation({ input });
+      editLabelMutation({ variables: { input } });
     };
     const setContextualPalette = (contextualPalette) => {
       if (canEdit) {
@@ -415,12 +417,15 @@ export const DiagramWebSocketContainer = ({ representationId, selection, setSele
   ]);
 
   useEffect(() => {
-    if (!toolSectionData.loading && viewState === READY__STATE) {
-      if (toolSectionData?.data?.data?.viewer?.toolSections) {
-        dispatch({ type: SET_TOOL_SECTIONS__ACTION, toolSections: toolSectionData.data.data.viewer.toolSections });
+    if (!toolSectionLoading && viewState === READY__STATE) {
+      if (toolSectionData?.viewer?.toolSections) {
+        dispatch({
+          type: SET_TOOL_SECTIONS__ACTION,
+          toolSections: JSON.parse(JSON.stringify(toolSectionData.viewer.toolSections)),
+        });
       }
     }
-  }, [toolSectionData, viewState]);
+  }, [toolSectionLoading, toolSectionData, viewState]);
   /**
    * Connect to the WebSocket server to retrieve updates when the component is ready. This will only be
    * performed once we are in the READY__STATE. This ensure that the WebSocket connection cannot be setup
