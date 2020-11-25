@@ -182,7 +182,7 @@ export const diagramEventSubscription = gql`
       y
     }
   }
-`.loc.source.body;
+`;
 
 export const deleteFromDiagramMutation = gql`
   mutation deleteFromDiagram($input: DeleteFromDiagramInput!) {

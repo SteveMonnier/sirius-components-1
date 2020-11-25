@@ -10,47 +10,45 @@
  * Contributors:
  *     Obeo - initial API and implementation
  *******************************************************************************/
-import { GraphQLClient } from 'common/GraphQLClient';
-import { useLazyQuery, useMutation } from '@apollo/client';
+import { useLazyQuery, useMutation, useSubscription } from '@apollo/client';
 import { Text } from 'core/text/Text';
 import {
   COMPLETE__STATE,
   HANDLE_COMPLETE__ACTION,
-  HANDLE_CONNECTION_ERROR__ACTION,
   HANDLE_DATA__ACTION,
-  HANDLE_ERROR__ACTION,
   INITIALIZE__ACTION,
   LOADING__STATE,
   READY__STATE,
   SELECTED_ELEMENT__ACTION,
   SELECTION__ACTION,
+  SELECT_ZOOM_LEVEL__ACTION,
   SET_ACTIVE_TOOL__ACTION,
   SET_CONTEXTUAL_PALETTE__ACTION,
   SET_DEFAULT_TOOL__ACTION,
   SET_TOOL_SECTIONS__ACTION,
-  SELECT_ZOOM_LEVEL__ACTION,
   SWITCH_REPRESENTATION__ACTION,
 } from 'diagram/machine';
+import { ContextualPalette } from 'diagram/palette/ContextualPalette';
 import { initialState, reducer } from 'diagram/reducer';
+import { edgeCreationFeedback } from 'diagram/sprotty/edgeCreationFeedback';
 import {
   ACTIVE_TOOL_ACTION,
+  HIDE_CONTEXTUAL_TOOLBAR_ACTION,
   SIRIUS_SELECT_ACTION,
   SIRIUS_UPDATE_MODEL_ACTION,
+  SOURCE_ELEMENT_ACTION,
   SPROTTY_SELECT_ACTION,
   ZOOM_IN_ACTION,
   ZOOM_OUT_ACTION,
   ZOOM_TO_ACTION,
-  SOURCE_ELEMENT_ACTION,
-  HIDE_CONTEXTUAL_TOOLBAR_ACTION,
 } from 'diagram/sprotty/WebSocketDiagramServer';
 import { Toolbar } from 'diagram/Toolbar';
-import { ContextualPalette } from 'diagram/palette/ContextualPalette';
+import { HANDLE_ERROR__ACTION } from 'explorer/machine';
 import { useProject } from 'project/ProjectProvider';
-import { edgeCreationFeedback } from 'diagram/sprotty/edgeCreationFeedback';
 import PropTypes from 'prop-types';
-import React, { useContext, useEffect, useReducer, useRef, useCallback } from 'react';
+import React, { useCallback, useEffect, useReducer, useRef } from 'react';
 import 'reflect-metadata'; // Required because Sprotty uses Inversify and both frameworks are written in TypeScript with experimental features.
-import { FitToScreenAction, EditLabelAction } from 'sprotty';
+import { EditLabelAction, FitToScreenAction } from 'sprotty';
 import styles from './Diagram.module.css';
 import {
   deleteFromDiagramMutation,
@@ -216,7 +214,6 @@ const propTypes = {
  * @author sbegaudeau
  */
 export const DiagramWebSocketContainer = ({ representationId, selection, setSelection, setSubscribers }) => {
-  const { graphQLWebSocketClient } = useContext(GraphQLClient);
   const { id, canEdit } = useProject() as any;
   const diagramDomElement = useRef(null);
 
@@ -426,56 +423,25 @@ export const DiagramWebSocketContainer = ({ representationId, selection, setSele
       }
     }
   }, [toolSectionLoading, toolSectionData, viewState]);
-  /**
-   * Connect to the WebSocket server to retrieve updates when the component is ready. This will only be
-   * performed once we are in the READY__STATE. This ensure that the WebSocket connection cannot be setup
-   * while the diagram server has not been properly initialized.
-   */
-  useEffect(() => {
-    if (viewState !== READY__STATE) {
-      return () => {};
-    }
-    const operationId = graphQLWebSocketClient.generateOperationId();
 
-    const subscribe = () => {
-      graphQLWebSocketClient.on(operationId, (message) => {
-        switch (message.type) {
-          case 'connection_error':
-            dispatch({ type: HANDLE_CONNECTION_ERROR__ACTION, message });
-            break;
-          case 'error':
-            dispatch({ type: HANDLE_ERROR__ACTION, message });
-            break;
-          case 'data':
-            dispatch({ type: HANDLE_DATA__ACTION, message });
-            break;
-          case 'complete':
-            dispatch({ type: HANDLE_COMPLETE__ACTION, message });
-            break;
-          default:
-            break;
-        }
-      });
-
-      const variables = {
-        input: {
-          projectId: id,
-          diagramId: representationId,
-        },
-      };
-      graphQLWebSocketClient.start(operationId, diagramEventSubscription, variables, 'diagramEvent');
-    };
-
-    const unsubscribe = (id) => {
-      graphQLWebSocketClient.remove(id);
-      graphQLWebSocketClient.stop(id);
-    };
-
-    subscribe();
-    return () => {
-      unsubscribe(operationId);
-    };
-  }, [graphQLWebSocketClient, id, representationId, viewState]);
+  const { error } = useSubscription(diagramEventSubscription, {
+    variables: {
+      input: {
+        projectId: id,
+        diagramId: representationId,
+      },
+    },
+    fetchPolicy: 'no-cache',
+    skip: viewState !== READY__STATE,
+    onSubscriptionData: ({ subscriptionData }) => {
+      dispatch({ type: HANDLE_DATA__ACTION, message: subscriptionData });
+    },
+    onSubscriptionComplete: () => dispatch({ type: HANDLE_COMPLETE__ACTION }),
+    shouldResubscribe: ({ variables: { input } }) => input.projectId !== id || input.diagramId !== representationId,
+  });
+  if (error) {
+    dispatch({ type: HANDLE_ERROR__ACTION, message: error });
+  }
 
   /**
    * Each time the list of subscribers is updated, this will trigger the listener used to display the

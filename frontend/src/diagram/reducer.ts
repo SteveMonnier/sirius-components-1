@@ -207,8 +207,8 @@ const handleDataAction = (prevState, action) => {
   const { message } = action;
 
   let state = prevState;
-  if (message.payload && message.payload.data && message.payload.data.diagramEvent) {
-    const { diagramEvent } = message.payload.data;
+  if (message.data && message.data.diagramEvent) {
+    const { diagramEvent } = message.data;
     if (diagramEvent.__typename === 'DiagramRefreshedEventPayload') {
       const {
         displayedRepresentationId,
