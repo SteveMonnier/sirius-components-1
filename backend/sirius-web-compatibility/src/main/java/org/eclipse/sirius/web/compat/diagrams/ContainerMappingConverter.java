@@ -95,7 +95,7 @@ public class ContainerMappingConverter {
                 .build();
         // @formatter:on
 
-        Function<VariableManager, String> containerIdProvider = variableManager -> UUID.randomUUID().toString();
+        Function<VariableManager, String> containerIdProvider = new StableIdProvider(this.objectService);
         Function<VariableManager, String> semanticTargetIdProvider = variableManager -> {
             return variableManager.get(VariableManager.SELF, EObject.class).map(this.objectService::getId).orElse(null);
         };

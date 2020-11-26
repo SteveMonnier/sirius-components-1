@@ -82,7 +82,7 @@ public class NodeMappingConverter {
                 .build();
         // @formatter:on
 
-        Function<VariableManager, String> nodeIdProvider = variableManager -> UUID.randomUUID().toString();
+        Function<VariableManager, String> nodeIdProvider = new StableIdProvider(this.objectService);
 
         Function<VariableManager, String> semanticTargetIdProvider = variableManager -> {
             return variableManager.get(VariableManager.SELF, EObject.class).map(this.objectService::getId).orElse(null);

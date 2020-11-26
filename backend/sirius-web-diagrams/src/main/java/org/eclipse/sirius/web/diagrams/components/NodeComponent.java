@@ -37,6 +37,8 @@ import org.eclipse.sirius.web.representations.VariableManager;
  */
 public class NodeComponent implements IComponent {
 
+    private static final String DESCRIPTION_ID = "descriptionId"; //$NON-NLS-1$
+
     private NodeComponentProps props;
 
     public NodeComponent(NodeComponentProps props) {
@@ -55,10 +57,13 @@ public class NodeComponent implements IComponent {
         for (Object semanticElement : semanticElements) {
             VariableManager nodeVariableManager = variableManager.createChild();
             nodeVariableManager.put(VariableManager.SELF, semanticElement);
+            nodeVariableManager.put(DESCRIPTION_ID, nodeDescription.getId().toString());
+
+            String targetObjectId = nodeDescription.getTargetObjectIdProvider().apply(nodeVariableManager);
+            nodeVariableManager.put("semanticId", targetObjectId); //$NON-NLS-1$
 
             String nodeId = nodeDescription.getIdProvider().apply(nodeVariableManager);
             String type = nodeDescription.getTypeProvider().apply(nodeVariableManager);
-            String targetObjectId = nodeDescription.getTargetObjectIdProvider().apply(nodeVariableManager);
             String targetObjectKind = nodeDescription.getTargetObjectKindProvider().apply(nodeVariableManager);
             String targetObjectLabel = nodeDescription.getTargetObjectLabelProvider().apply(nodeVariableManager);
 
@@ -72,14 +77,20 @@ public class NodeComponent implements IComponent {
             // @formatter:off
             var borderNodes = nodeDescription.getBorderNodeDescriptions().stream()
                     .map(borderNodeDescription -> {
-                        var nodeComponentProps = new NodeComponentProps(nodeVariableManager, borderNodeDescription, true, cache);
+                        var borderNodesVariableManager = nodeVariableManager.createChild();
+                        borderNodesVariableManager.put("parentViewId", nodeId); //$NON-NLS-1$
+                        borderNodesVariableManager.put("containmentKind", "border"); //$NON-NLS-1$ //$NON-NLS-2$
+                        var nodeComponentProps = new NodeComponentProps(borderNodesVariableManager, borderNodeDescription, true, cache);
                         return new Element(NodeComponent.class, nodeComponentProps);
                     })
                     .collect(Collectors.toList());
 
             var childNodes = nodeDescription.getChildNodeDescriptions().stream()
                     .map(childNodeDescription -> {
-                        var nodeComponentProps = new NodeComponentProps(nodeVariableManager, childNodeDescription, false, cache);
+                        var childNodeVariableManager = nodeVariableManager.createChild();
+                        childNodeVariableManager.put("parentViewId", nodeId); //$NON-NLS-1$
+                        childNodeVariableManager.put("containmentKind", "child"); //$NON-NLS-1$ //$NON-NLS-2$
+                        var nodeComponentProps = new NodeComponentProps(childNodeVariableManager, childNodeDescription, false, cache);
                         return new Element(NodeComponent.class, nodeComponentProps);
                     })
                     .collect(Collectors.toList());

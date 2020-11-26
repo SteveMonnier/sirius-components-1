@@ -47,6 +47,10 @@ public class DiagramComponent implements IComponent {
         String label = diagramDescription.getLabelProvider().apply(variableManager);
 
         UUID diagramId = diagramDescription.getIdProvider().apply(variableManager);
+        // Bootstrap parentViewId for top-level nodes
+        variableManager.put("parentViewId", diagramId.toString()); //$NON-NLS-1$
+        variableManager.put("containmentKind", "child"); //$NON-NLS-1$ //$NON-NLS-2$
+
         String targetObjectId = diagramDescription.getTargetObjectIdProvider().apply(variableManager);
 
         DiagramRenderingCache cache = new DiagramRenderingCache();
