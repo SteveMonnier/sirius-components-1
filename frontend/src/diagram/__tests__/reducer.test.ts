@@ -69,12 +69,10 @@ const completeMessage = {
 const subscribersUpdatedEventPayloadMessage = {
   type: 'data',
   id: '51',
-  payload: {
-    data: {
-      diagramEvent: {
-        __typename: 'SubscribersUpdatedEventPayload',
-        subscribers: [{ username: 'jdoe' }],
-      },
+  data: {
+    diagramEvent: {
+      __typename: 'SubscribersUpdatedEventPayload',
+      subscribers: [{ username: 'jdoe' }],
     },
   },
 };
@@ -165,7 +163,7 @@ describe('DiagramWebSocketContainer - reducer', () => {
       latestSelection: undefined,
       activeTool: undefined,
       zoomLevel: prevState.zoomLevel,
-      subscribers: message.payload.data.diagramEvent.subscribers,
+      subscribers: message.data.diagramEvent.subscribers,
       message: undefined,
     });
   });
