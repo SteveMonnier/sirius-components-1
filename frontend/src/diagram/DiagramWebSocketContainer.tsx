@@ -418,7 +418,7 @@ export const DiagramWebSocketContainer = ({ representationId, selection, setSele
       if (toolSectionData?.viewer?.toolSections) {
         dispatch({
           type: SET_TOOL_SECTIONS__ACTION,
-          toolSections: JSON.parse(JSON.stringify(toolSectionData.viewer.toolSections)),
+          toolSections: toolSectionData.viewer.toolSections,
         });
       }
     }

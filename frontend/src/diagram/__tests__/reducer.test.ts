@@ -25,6 +25,7 @@ import {
   SELECTION__ACTION,
   SELECTED_ELEMENT__ACTION,
   SELECT_ZOOM_LEVEL__ACTION,
+  SET_TOOL_SECTIONS__ACTION,
 } from '../machine';
 
 class ActionDispatcher {
@@ -380,6 +381,58 @@ describe('DiagramWebSocketContainer - reducer', () => {
       latestSelection: undefined,
       contextualPalette: undefined,
       zoomLevel: '2',
+      subscribers: prevState.subscribers,
+      message: undefined,
+    });
+  });
+
+  it('computes a default tool for non-empty sections', () => {
+    const prevState = getReadyState();
+    const action = {
+      type: SET_TOOL_SECTIONS__ACTION,
+      toolSections: [
+        {
+          id: 'section0',
+          tools: [],
+        },
+        {
+          id: 'section1',
+          tools: [{ id: 'singleTool' }],
+          defaultTool: { id: 'singleTool' },
+        },
+        {
+          id: 'section2',
+          tools: [{ id: 'firstTool' }, { id: 'secondTool' }],
+        },
+      ],
+    };
+    const state = reducer(prevState, action);
+    expect(state).toStrictEqual({
+      viewState: READY__STATE,
+      displayedRepresentationId: prevState.displayedRepresentationId,
+      diagramServer: prevState.diagramServer,
+      diagram: prevState.diagram,
+      toolSections: [
+        {
+          id: 'section0',
+          tools: [],
+        },
+        {
+          id: 'section1',
+          tools: [{ id: 'singleTool' }],
+          defaultTool: { id: 'singleTool' },
+        },
+        {
+          id: 'section2',
+          tools: [{ id: 'firstTool' }, { id: 'secondTool' }],
+          defaultTool: { id: 'firstTool' },
+        },
+      ],
+      activeTool: prevState.activeTool,
+      newSelection: prevState.newSelection,
+      latestSelection: prevState.latestSelection,
+      contextualPalette: prevState.contextualPalette,
+      zoomLevel: prevState.zoomLevel,
       subscribers: prevState.subscribers,
       message: undefined,
     });

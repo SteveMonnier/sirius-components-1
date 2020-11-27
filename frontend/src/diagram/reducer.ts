@@ -394,10 +394,13 @@ const setToolSectionsAction = (prevState, action) => {
   } = prevState;
   const { toolSections } = action;
 
+  let toolSectionsWithDefaults = toolSections;
   if (toolSections) {
-    toolSections.forEach((toolSection) => {
+    toolSectionsWithDefaults = toolSections.map((toolSection) => {
       if (toolSection.tools && toolSection.tools.length > 0) {
-        toolSection.defaultTool = toolSection.tools[0];
+        return { ...toolSection, defaultTool: toolSection.tools[0] };
+      } else {
+        return toolSection;
       }
     });
   }
@@ -408,7 +411,7 @@ const setToolSectionsAction = (prevState, action) => {
     diagramServer,
     diagram,
     contextualPalette,
-    toolSections,
+    toolSections: toolSectionsWithDefaults,
     activeTool,
     latestSelection,
     newSelection,
