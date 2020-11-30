@@ -195,7 +195,7 @@ const handleConnectionErrorAction = (prevState) => {
 };
 
 const handleErrorAction = (prevState, action) => {
-  const { payload: message } = action.message;
+  const message = action.message;
   return switchToCompleteState(prevState, message);
 };
 

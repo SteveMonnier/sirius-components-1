@@ -57,11 +57,7 @@ const getReadyState = () => ({
 const nodeTool = { id: 'myNodeToolId', label: 'My Node Tool', type: 'CreateNodeTool' };
 const edgeTool = { id: 'myEdgeToolId', label: 'My Edge Tool', type: 'CreateEdgeTool' };
 
-const errorMessage = {
-  type: 'error',
-  id: '42',
-  payload: 'An error has occured while retrieving the content from the server',
-};
+const errorMessage = 'An error has occured while retrieving the content from the server';
 
 const completeMessage = {
   type: 'complete',
@@ -143,7 +139,7 @@ describe('DiagramWebSocketContainer - reducer', () => {
       activeTool: undefined,
       zoomLevel: undefined,
       subscribers: [],
-      message: message.payload,
+      message,
     });
   });
 
@@ -187,7 +183,7 @@ describe('DiagramWebSocketContainer - reducer', () => {
       activeTool: undefined,
       zoomLevel: undefined,
       subscribers: prevState.subscribers,
-      message: message.payload,
+      message,
     });
   });
 
