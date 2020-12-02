@@ -24,6 +24,7 @@ import org.eclipse.sirius.web.collaborative.diagrams.api.DiagramCreationParamete
 import org.eclipse.sirius.web.collaborative.diagrams.api.IDiagramService;
 import org.eclipse.sirius.web.components.Element;
 import org.eclipse.sirius.web.diagrams.Diagram;
+import org.eclipse.sirius.web.diagrams.Edge;
 import org.eclipse.sirius.web.diagrams.Node;
 import org.eclipse.sirius.web.diagrams.components.DiagramComponent;
 import org.eclipse.sirius.web.diagrams.components.DiagramComponentProps;
@@ -102,5 +103,28 @@ public class DiagramService implements IDiagramService {
                 .filter(Diagram.class::isInstance)
                 .map(Diagram.class::cast);
         // @formatter:on
+    }
+
+    @Override
+    public Optional<Edge> findEdgeById(Diagram diagram, String edgeId) {
+        return this.findEdge(edge -> Objects.equals(edge.getId(), edgeId), diagram.getEdges());
+    }
+
+    /**
+     * @param object
+     * @param edges
+     * @return
+     */
+    private Optional<Edge> findEdge(Predicate<Edge> condition, List<Edge> candidates) {
+        Optional<Edge> result = Optional.empty();
+        for (Edge node : candidates) {
+            if (condition.test(node)) {
+                result = Optional.of(node);
+            }
+            if (result.isPresent()) {
+                break;
+            }
+        }
+        return result;
     }
 }

@@ -20,6 +20,7 @@ import java.util.function.Predicate;
 
 import org.eclipse.sirius.web.collaborative.diagrams.api.IDiagramDescriptionService;
 import org.eclipse.sirius.web.diagrams.description.DiagramDescription;
+import org.eclipse.sirius.web.diagrams.description.EdgeDescription;
 import org.eclipse.sirius.web.diagrams.description.NodeDescription;
 import org.springframework.stereotype.Service;
 
@@ -43,6 +44,24 @@ public class DiagramDescriptionService implements IDiagramDescriptionService {
                 result = Optional.of(node);
             } else {
                 result = this.findNodeDescription(condition, node.getBorderNodeDescriptions()).or(() -> this.findNodeDescription(condition, node.getChildNodeDescriptions()));
+            }
+            if (result.isPresent()) {
+                break;
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public Optional<EdgeDescription> findEdgeDescriptionById(DiagramDescription diagramDescription, UUID edgeDescriptionId) {
+        return this.findEdgeDescription(edgeDesc -> Objects.equals(edgeDesc.getId(), edgeDescriptionId), diagramDescription.getEdgeDescriptions());
+    }
+
+    private Optional<EdgeDescription> findEdgeDescription(Predicate<EdgeDescription> condition, List<EdgeDescription> candidates) {
+        Optional<EdgeDescription> result = Optional.empty();
+        for (EdgeDescription node : candidates) {
+            if (condition.test(node)) {
+                result = Optional.of(node);
             }
             if (result.isPresent()) {
                 break;
